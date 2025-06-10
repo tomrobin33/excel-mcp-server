@@ -51,21 +51,25 @@ def read_excel_range(
             except ValueError as e:
                 raise DataError(f"Invalid end cell format: {str(e)}")
         else:
-            # Dynamically expand range until all values are empty
-            end_row, end_col = start_row, start_col
-            while end_row <= ws.max_row and any(ws.cell(row=end_row, column=c).value is not None for c in range(start_col, ws.max_column + 1)):
-                end_row += 1
-            while end_col <= ws.max_column and any(ws.cell(row=r, column=end_col).value is not None for r in range(start_row, ws.max_row + 1)):
-                end_col += 1
-            end_row -= 1  # Adjust back to last non-empty row
-            end_col -= 1  # Adjust back to last non-empty column
+            # If no end_cell, use the full data range of the sheet
+            if ws.max_row == 1 and ws.max_column == 1 and ws.cell(1, 1).value is None:
+                # Handle empty sheet
+                end_row, end_col = start_row, start_col
+            else:
+                # Use the sheet's own boundaries
+                start_row, start_col = ws.min_row, ws.min_column
+                end_row, end_col = ws.max_row, ws.max_column
 
         # Validate range bounds
         if start_row > ws.max_row or start_col > ws.max_column:
-            raise DataError(
-                f"Start cell out of bounds. Sheet dimensions are "
-                f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
+            # This case can happen if start_cell is outside the used area on a sheet with data
+            # or on a completely empty sheet.
+            logger.warning(
+                f"Start cell {start_cell} is outside the sheet's data boundary "
+                f"({get_column_letter(ws.min_column)}{ws.min_row}:{get_column_letter(ws.max_column)}{ws.max_row}). "
+                f"No data will be read."
             )
+            return []
 
         data = []
         for row in range(start_row, end_row + 1):
@@ -295,25 +299,32 @@ def read_excel_range_with_metadata(
             except ValueError as e:
                 raise DataError(f"Invalid end cell format: {str(e)}")
         else:
-            # Dynamically expand range until all values are empty
-            end_row, end_col = start_row, start_col
-            while end_row <= ws.max_row and any(ws.cell(row=end_row, column=c).value is not None for c in range(start_col, ws.max_column + 1)):
-                end_row += 1
-            while end_col <= ws.max_column and any(ws.cell(row=r, column=end_col).value is not None for r in range(start_row, ws.max_row + 1)):
-                end_col += 1
-            end_row -= 1  # Adjust back to last non-empty row
-            end_col -= 1  # Adjust back to last non-empty column
+            # If no end_cell, use the full data range of the sheet
+            if ws.max_row == 1 and ws.max_column == 1 and ws.cell(1, 1).value is None:
+                # Handle empty sheet
+                end_row, end_col = start_row, start_col
+            else:
+                # Use the sheet's own boundaries, but respect the provided start_cell
+                end_row, end_col = ws.max_row, ws.max_column
+                # If start_cell is 'A1' (default), we should find the true start
+                if start_cell == 'A1':
+                    start_row, start_col = ws.min_row, ws.min_column
 
         # Validate range bounds
         if start_row > ws.max_row or start_col > ws.max_column:
-            raise DataError(
-                f"Start cell out of bounds. Sheet dimensions are "
-                f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
+            # This case can happen if start_cell is outside the used area on a sheet with data
+            # or on a completely empty sheet.
+            logger.warning(
+                f"Start cell {start_cell} is outside the sheet's data boundary "
+                f"({get_column_letter(ws.min_column)}{ws.min_row}:{get_column_letter(ws.max_column)}{ws.max_row}). "
+                f"No data will be read."
             )
+            return {"range": f"{start_cell}:", "sheet_name": sheet_name, "cells": []}
 
         # Build structured cell data
+        range_str = f"{get_column_letter(start_col)}{start_row}:{get_column_letter(end_col)}{end_row}"
         range_data = {
-            "range": f"{start_cell}:{get_column_letter(end_col)}{end_row}" if end_cell else start_cell,
+            "range": range_str,
             "sheet_name": sheet_name,
             "cells": []
         }
