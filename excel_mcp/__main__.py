@@ -1,5 +1,27 @@
 import asyncio
 import typer
+import sys
+
+deps = [
+    ("typer", "typer"),
+    ("openpyxl", "openpyxl"),
+    ("mcp", "mcp"),
+    ("click", "click"),
+    ("rich", "rich"),
+    ("pygments", "pygments"),
+    ("markdown_it_py", "markdown_it_py"),
+    ("mdurl", "mdurl"),
+    ("shellingham", "shellingham"),
+    ("typing_extensions", "typing_extensions"),
+    ("colorama", "colorama"),
+]
+
+for name, mod in deps:
+    try:
+        __import__(mod)
+        print(f"[LOG] {name} 导入成功", file=sys.stderr)
+    except ImportError:
+        print(f"[ERROR] {name} 导入失败", file=sys.stderr)
 
 from .server import run_sse, run_stdio, run_streamable_http
 
