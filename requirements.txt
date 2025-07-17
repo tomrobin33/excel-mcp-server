@@ -1,3 +1,10 @@
-typer>=0.16.0
-openpyxl>=3.1.5
-mcp[cli]>=1.10.1 
+typer-0.16.0-py3-none-any.whl
+click-8.2.1-py3-none-any.whl
+rich-14.0.0-py3-none-any.whl
+pygments-2.19.2-py3-none-any.whl
+markdown_it_py-3.0.0-py3-none-any.whl
+mdurl-0.1.2-py3-none-any.whl
+shellingham-1.5.4-py2.py3-none-any.whl
+typing_extensions-4.14.1-py3-none-any.whl
+colorama-0.4.6-py2.py3-none-any.whl 
+openpyxl 
